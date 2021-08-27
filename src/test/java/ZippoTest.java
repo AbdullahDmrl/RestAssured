@@ -100,6 +100,7 @@ public class ZippoTest {
 
         ;
     }
+
     @Test
     public void checkStateInResponseBodyHasItem1()
     {
@@ -120,21 +121,19 @@ public class ZippoTest {
     public void checkStateInResponseBodyHasSize()
     {
         given()
-
                 .when()
                 .get("http://api.zippopotam.us/us/90210")
-
                 .then()
                 .log().body()
                 .body("places",hasSize(1))
                 .statusCode(200)
         ;
     }
+
     @Test
     public void CombiningTest()
     {
         given()
-
                 .when()
                 .get("http://api.zippopotam.us/us/90210")
                 .then()
@@ -145,8 +144,24 @@ public class ZippoTest {
                 .statusCode(200)
         ;
     }
+    /*
+    API ye parametre gönderme
+    1.Yöntem : parametreler / ayıracı    ile metoda gönderiliyor
+    http://api.zippopotam.us/us/90210    linki inceleyelim
+    http://api.zippopotam.us->  API nin adresi
+               /us/90210->  us ülke değişkenin değeri
+                            90210 zipkodu
+    2.Yöntem
+    https://gorest.co.in/public/v1/users  API adresi
+    https://gorest.co.in/public/v1/users?page=1&count=3
+                                     page değişken adı  = sonrası değeri
+                                     count değişken adı = sonrası değeri
+    ? işareti sonrası gönderilecek değerler paramatere adı=değeri
+                  yine ek parametre için & işareti ve yine adı ve değeri şeklinde gönderilir
+    */
+
     @Test
-    public void pathPramTest()
+    public void pathParamTest()  // 1 yöntem   Request URI:	http://api.zippopotam.us/us/90210
     {
         given()
                 .pathParam("country","us")
@@ -160,6 +175,25 @@ public class ZippoTest {
                 .statusCode(200)
         ;
     }
+    @Test
+    public void pathParamTest1() {
+        String country = "us";   // bu sekilde parametreleri tanimlayabiliriz
+        int zipKod = 90210;
+
+        given()
+                .pathParam("country", country)
+                .pathParam("zipKod", zipKod)
+                .log().uri() //request linki
+
+                .when()
+                .get("http://api.zippopotam.us/{country}/{zipKod}")
+
+                .then()
+                .log().body()
+                .body("places", hasSize(1))
+        ;
+    }
+
     @Test
     public void pathPramTestDongu() {
         String country = "us";
@@ -180,7 +214,7 @@ public class ZippoTest {
         }
     }
     @Test
-    public void queryPramTest()
+    public void queryPramTest()      // 2 yöntem   //Request URI:	https://gorest.co.in/public/v1/users?page=1
     {
         given()
                 .param("page",1)
