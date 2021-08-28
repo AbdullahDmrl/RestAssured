@@ -1,5 +1,15 @@
+import POJO.Location;
+import io.restassured.builder.RequestSpecBuilder;
+import io.restassured.builder.ResponseSpecBuilder;
+import io.restassured.filter.log.LogDetail;
 import io.restassured.http.ContentType;
+import io.restassured.specification.RequestSpecification;
+import io.restassured.specification.ResponseSpecification;
+import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import java.util.List;
 
 import static io.restassured.RestAssured.*;
 import static org.hamcrest.Matchers.*;
@@ -246,5 +256,142 @@ public class ZippoTest {
         ;
     }
 
+     // Envirment degisken gibi baseUri set ve requestSpecification
+    // ResponseSpecification tanimlama
+    private RequestSpecification requestSpecification;
+    private ResponseSpecification responseSpecification;
+
+    @BeforeClass
+    public void setUp(){
+        baseURI="http://api.zippopotam.us";   // bu sekilde atanir basinda http yoksa otamatik gelir
+
+
+        requestSpecification=new RequestSpecBuilder()
+                .setAccept(ContentType.JSON)
+                .log(LogDetail.URI)
+                .build();
+
+        responseSpecification=new ResponseSpecBuilder()
+                .expectStatusCode(200)
+                .expectContentType(ContentType.JSON)
+                .log(LogDetail.BODY)
+                .build();
+    }
+
+    @Test
+    public void baseUri()
+    {
+        given()
+                .pathParam("country","us")
+                .pathParam("zipKod","90210")
+                .log().uri()      // Request URI:	http://api.zippopotam.us/us/90210
+                .when()
+                .get("/{country}/{zipKod}")   // Basinda http yoksa otamatik gelir
+                .then()
+                .log().body()
+                .body("places",hasSize(1))
+                .statusCode(200)
+        ;
+    }
+
+    @Test
+    public void reqResSpecification()
+    {
+        given()
+                .pathParam("country","us")
+                .pathParam("zipKod","90210")
+                .spec(requestSpecification)
+
+                .when()
+                .get("/{country}/{zipKod}")
+
+                .then()
+                .spec(responseSpecification)   // olusturduktan sonra her yerde kullanabiliriz
+        ;
+    }
+
+    // JSON Extract********************
+    @Test
+    public void extractingJsonPath()
+    {
+      String places_name=given()
+               .spec(requestSpecification)
+                .when()
+                .get("/us/90210")
+                .then()
+               .spec(responseSpecification)
+                .extract().path("places[0].'place name'")// extract metodu ile given ile başlayan satır,
+                                                            // bir değer döndürür hale geldi
+        ;
+        Assert.assertEquals(places_name,"Beverly Hills");
+        System.out.println("places_name = " + places_name);
+    }
+
+    @Test
+    public void extractingJsonPathInt()
+    {
+        int limit=
+                given()
+                        .param("page",1)
+                        .spec(requestSpecification)
+                        .when()
+                        .get("https://gorest.co.in/public/v1/users")
+                        .then()
+                        .spec(responseSpecification)
+                        .extract().path("meta.pagination.limit");
+                      //  .extract().path("meta.pagination.limit").toString(); yaparak hepsini String alabiliriz
+        ;
+        Assert.assertEquals(limit,20);
+        System.out.println("limit = " + limit);
+    }
+
+    @Test
+    public void extractingJsonPathIntList()
+    {
+        //    data[0].id -> 1.elemanın yani indexi 0 olanın id si
+        //    data.id -> tum id ler demekdir list<int>
+        List<Integer> idler=
+                given()
+                        .param("page",1)
+
+                        .when()
+                        .get("https://gorest.co.in/public/v1/users")
+
+                        .then()
+                        .extract().path("data.id");
+        ;
+        System.out.println("idler = " + idler);
+    }
+    @Test
+    public void extractingJsonPathStringList()
+    {
+        List<String> koyler= given()
+                .when()
+                .get("/tr/01000")
+                .then()
+                .spec(responseSpecification)
+                .extract().path("places.'place name'")  // extract metodu ile given ile başlayan satır, bir değer döndürür hale geldi
+        ;
+        System.out.println("koyler = " + koyler);
+        Assert.assertTrue(koyler.contains("Büyükdikili Köyü"));
+    }
+
+    @Test
+    public void extractingJsonPOJO() // POJO : JSon Object i
+    {
+        Location location=
+                given()
+                        .when()
+                        .get("/us/90210")
+
+                        .then()
+                        .extract().as(Location.class);
+        ;
+
+        System.out.println("location = " + location);
+        System.out.println("location.getCountry() = " + location.getCountry());
+        System.out.println("location.getPlaces() = " + location.getPlaces());
+        System.out.println("location.getPlaces().get(0).getPlacename() = " + location.getPlaces().get(0).getPlacename());
+    }
 
 }
