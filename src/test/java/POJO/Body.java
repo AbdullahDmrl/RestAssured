@@ -1,4 +1,4 @@
-import POJO.Place;
+package POJO;
 
 import java.util.List;
 
@@ -43,7 +43,7 @@ public class Body {
 
     @Override
     public String toString() {
-        return "Body{" +
+        return "POJO.Body{" +
                 "userId=" + userId +
                 ", id=" + id +
                 ", title='" + title + '\'' +

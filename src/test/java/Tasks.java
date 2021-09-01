@@ -1,22 +1,15 @@
 
-import io.restassured.builder.RequestSpecBuilder;
-import io.restassured.builder.ResponseSpecBuilder;
-import io.restassured.filter.log.LogDetail;
+import POJO.Body;
 import io.restassured.http.ContentType;
-import io.restassured.specification.RequestSpecification;
-import io.restassured.specification.ResponseSpecification;
 import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import static io.restassured.RestAssured.*;
 import static org.hamcrest.Matchers.*;
 
-public class Task {
+public class Tasks {
     /** Task 1
      * create a request to https://httpstat.us/203
      * expect status 203
@@ -180,7 +173,6 @@ public class Task {
         List<Body> bodies= Arrays.asList(body);
         System.out.println("bodies = " + bodies);
         }
-
 
     /** Task 8 - Ödev 2
      * create a request to https://jsonplaceholder.typicode.com/todos
