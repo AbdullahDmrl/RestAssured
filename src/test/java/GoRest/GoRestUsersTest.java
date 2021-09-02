@@ -5,16 +5,22 @@ import io.restassured.http.ContentType;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.testng.annotations.Test;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 import static org.hamcrest.Matchers.*;
 import static io.restassured.RestAssured.*;
 
     public class GoRestUsersTest {
 
-        String url="https://gorest.co.in/public/v1/users";
+        // siralamayi priority veya depends ile veriyoruz Burada toplu calistrsaydik;
+        // priority ile siralama yapip depedns leri kaldirabilirdik
+
+
         int userId;
 
-        @Test(priority = 1)
+        @Test(enabled = false)
         public void getUserList() {
 
             List<User> userList=
@@ -34,7 +40,7 @@ import static io.restassured.RestAssured.*;
             }
         }
 
-    @Test(priority = 2)
+    @Test()
     public void createUser() {
         userId=
             given()
@@ -51,7 +57,7 @@ import static io.restassured.RestAssured.*;
             ;
         }
 
-    @Test(priority = 3,dependsOnMethods = "createUser")
+    @Test(dependsOnMethods = "createUser",priority = 1)
     public void updateUserByID() {
 
             given()
@@ -69,7 +75,7 @@ import static io.restassured.RestAssured.*;
             ;
         }
 
-    @Test(priority = 4, dependsOnMethods = "createUser")
+    @Test(dependsOnMethods = "createUser",priority = 2)
     public void getUserByID() {
             given()
                     .pathParam("userID",userId)
@@ -83,7 +89,7 @@ import static io.restassured.RestAssured.*;
             ;
         }
 
-   @Test(priority = 5, dependsOnMethods = "createUser")
+   @Test(dependsOnMethods = "createUser",priority = 3)
    public void deleteUserByID() {
             given()
                     .header("Authorization","Bearer e4b725104d61c0ebaffa9eccfe772b0c0cba54dff360d019e2ceeeac90e63eea")
@@ -92,9 +98,21 @@ import static io.restassured.RestAssured.*;
                     .delete("https://gorest.co.in/public/v1/users/{userID}")
                     .then()
                     .statusCode(204)
-
             ;
        }
+
+        @Test(dependsOnMethods = "deleteUserByID") // buna yazmiyorum cunku delete bagli.
+                                                    // Ayni degere depends olanlari önceliklendiriyorum
+        public void deleteUserByIDNegativ() {
+            given()
+                    .header("Authorization","Bearer e4b725104d61c0ebaffa9eccfe772b0c0cba54dff360d019e2ceeeac90e63eea")
+                    .pathParam("userID",userId)
+                    .when()
+                    .delete("https://gorest.co.in/public/v1/users/{userID}")
+                    .then()
+                    .statusCode(404)
+            ;
+        }
 
      public String getRandomName(){
          String randomName= RandomStringUtils.randomAlphabetic(4);
@@ -105,95 +123,50 @@ import static io.restassured.RestAssured.*;
          return randomString+"@gmail.com";
      }
 
-        @Test(priority = 6)
-        public void getUserListURL() {
-            List<User> userList=
-                    given()
-                            .when()
-                            .get(url)
-                            .then()
-                            .statusCode(200)
-                            .contentType(ContentType.JSON)
-                            //.log().body()
-                            .extract().jsonPath().getList("data",User.class)
-                    ;
-            System.out.println("userList = " + userList);
-            // daha düzenli Istersek
-            for (User u:userList){
-                System.out.println("u = " + u);
-            }
-        }
+     // Simdi body kismini daha basitlestirecek 2 yöntem anlatilacak
+    //1.
+        @Test()
+        public void createNewUserBodyMap() {
+          Map<String,String> newUser=new HashMap<>(); // verileri istersek Map olak gönderebiliriz
+          newUser.put("name",getRandomName());        // Content.JSON  onlari JSON a cevirir
+          newUser.put("gender","male");
+          newUser.put("email",getRandomEmail());
+          newUser.put("status","active");
 
-
-   @Test(priority = 7)
-   public void createUserURL() {
-            userId=
-                 given()
-                      .header("Authorization","Bearer e4b725104d61c0ebaffa9eccfe772b0c0cba54dff360d019e2ceeeac90e63eea")
-                      .contentType(ContentType.JSON)
-                      .body("{\"name\":\""+getRandomName()+"\", \"gender\":\"male\", \"email\":\""+getRandomEmail()+"\", \"status\":\"active\"}")
-                      .when()
-                      .post(url)
-                      .then()
-                      .statusCode(201)
-                      .contentType(ContentType.JSON)
-                      //.log().body()
-                      .extract().jsonPath().getInt("data.id")
-                ;
-                     System.out.println("userId = " + userId);
-    }
-
-   @Test(priority = 8,dependsOnMethods = "createUserURL")
-   public void updateUserByIDURL() {
-         String name=
-             given()
-                .header("Authorization","Bearer e4b725104d61c0ebaffa9eccfe772b0c0cba54dff360d019e2ceeeac90e63eea")
-                .contentType(ContentType.JSON)
-                .body("{\"name\":\""+getRandomName()+"\"}")    // ++ lari koymaliyiz
-                .pathParam("userID",userId)
-                .when()
-                .put(url+"/{userID}")
-                .then()
-                .log().body()
-                .statusCode(200)
-                .extract().jsonPath().getString("data.name")
-         ;
-            System.out.println("name = " + name);
-        }
-
-   @Test(priority = 9,dependsOnMethods = "createUserURL")
-   public void getUserByIDURL() {
-            given()
-                    .pathParam("userID",userId)
-                    .log().uri()
-                    .when()
-                    .get(url+"/{userID}")  //
-                    .then()
-                    //.log().body()
-                    .statusCode(200)
-                    .body("data.id",equalTo(userId))
+           given()
+                   .header("Authorization","Bearer e4b725104d61c0ebaffa9eccfe772b0c0cba54dff360d019e2ceeeac90e63eea")
+                   .contentType(ContentType.JSON)
+                   .body(newUser)  // bodye newUser olarak yaziyoruz
+                   .when()
+                   .post("https://gorest.co.in/public/v1/users")
+                   .then()
+                   .statusCode(201)
+                   .contentType(ContentType.JSON)
+                   .log().body()
             ;
-             System.out.println("userId = " + userId);
         }
+        //2.
 
-   @Test(priority = 10,dependsOnMethods = "createUserURL")
-   public void deleteUserByIDURL() {
-                given()
-                            .header("Authorization","Bearer e4b725104d61c0ebaffa9eccfe772b0c0cba54dff360d019e2ceeeac90e63eea")
-                            .pathParam("userID",userId)
-                            .when()
-                            .delete(url+"/{userID}")
-                            .then()
-                            .statusCode(204)
-                    ;
+        @Test()
+        public void createNewUserBodyObjekt() {
+            User newUser=new User();                // verileri istersek User bir nesne olak gönderebiliriz
+            newUser.setName(getRandomName());     // Content.JSON  onlari JSON a cevirir
+            newUser.setGender("male");
+            newUser.setEmail(getRandomEmail());
+            newUser.setStatus("active");
 
+            given()
+                    .header("Authorization","Bearer e4b725104d61c0ebaffa9eccfe772b0c0cba54dff360d019e2ceeeac90e63eea")
+                    .contentType(ContentType.JSON)
+                    .body(newUser)  // bodye newUser olarak yaziyoruz
+                    .when()
+                    .post("https://gorest.co.in/public/v1/users")
+                    .then()
+                    .statusCode(201)
+                    .contentType(ContentType.JSON)
+                    .log().body()
+            ;
         }
-
-
-
-
-
-
 
 
 }
