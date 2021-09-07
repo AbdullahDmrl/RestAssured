@@ -146,7 +146,6 @@ import static io.restassured.RestAssured.*;
             ;
         }
         //2.
-
         @Test()
         public void createNewUserBodyObjekt() {
             User newUser=new User();                // verileri istersek User bir nesne olak gönderebiliriz
