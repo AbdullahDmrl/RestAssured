@@ -13,12 +13,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
-import static io.restassured.RestAssured.given;
+import static io.restassured.RestAssured.*;
+import static org.hamcrest.Matchers.*;
 
 public class GorestCommentsTest {
 
 
-    @Test
+    @Test(enabled = false)
     public void getCommentsList() {
 
         List<Comments> commentList=
@@ -39,7 +40,8 @@ public class GorestCommentsTest {
 
     // Task 1: https://gorest.co.in/public/v1/comments  Api sinden dönen verilerdeki data yı bir nesne yardımıyla
     //         List olarak alınız.
-    @Test
+
+    @Test(enabled = false)
     public void getComments() {
         Response response =
                 given()
@@ -68,7 +70,7 @@ public class GorestCommentsTest {
     // Task 2 Bütün Comment lardaki emailleri bir list olarak alınız ve
     // içinde "acharya_rajinder@ankunding.biz" olduğunu doğrulayınız.
 
-    @Test
+    @Test(enabled = false)
     public void getEmailList()
     {  // data[0].email  -> 1. email  , bütüm emailler için ise -> data.email
         List<String> emailList=
@@ -91,7 +93,7 @@ public class GorestCommentsTest {
 
     // Ayni soruyu response ile yaparsak
 
-    @Test
+    @Test(enabled = false)
     public void getEmailListResponse()
     {
         Response response=
@@ -117,7 +119,7 @@ public class GorestCommentsTest {
     // Task 3 : https://gorest.co.in/public/v1/comments  Api sinden
     // dönen bütün verileri tek bir nesneye dönüştürünüz
 
-    @Test
+    @Test(enabled = false)
     public void responseAllPOJO()
 
     {
@@ -143,25 +145,20 @@ public class GorestCommentsTest {
        {
            System.out.println("dataListElemet = " + c);
        }
-        
 
     }
 
-
-
-
-
+    // Task 4 : https://gorest.co.in/public/v1/comments  Api sine
+    // 1 Comments Create ediniz.
 
     int commentsId;
-    String url="https://gorest.co.in/public/v1/comments";
 
     @Test()
     public void createComments() {
         Comments newComment=new Comments();
-        newComment.setPost_id(createRandomInt());
-        newComment.setName(createRandomName());
-        newComment.setEmail(createRandomEmail());
-        newComment.setBody(createRandomBody());
+        newComment.setName("Abdullah Demirel");
+        newComment.setEmail("ademirel@yahho.com");
+        newComment.setBody("IT is the best");
 
         commentsId=
                 given()
@@ -169,20 +166,13 @@ public class GorestCommentsTest {
                         .contentType(ContentType.JSON)
                         .body(newComment)
                         .when()
-                        .post(url)
+                        .post("https://gorest.co.in/public/v1/posts/123/comments")
                         .then()
-                        .statusCode(201)
                         .log().body()
+                        .statusCode(201)
                         .extract().jsonPath().getInt("data.id")
         ;
         System.out.println("commentsId = " + commentsId);
-    }
-
-    public int createRandomInt(){
-        Random random=new Random();
-        int max=100;
-        int randomPost_Id=random.nextInt(max);
-        return randomPost_Id;
     }
 
     public String createRandomName(){
@@ -200,28 +190,77 @@ public class GorestCommentsTest {
         return randomString+"@gmail.com";
     }
 
+    // Task 5 : Create edilen Comment ı get yapınız.
 
-    @Test(dependsOnMethods = "createComments")
+    @Test(dependsOnMethods = "createComments",priority = 1)
+    public void getCommentsByID() {
+
+        given()
+                .pathParam("commentsID",commentsId)
+                .when()
+                .get("https://gorest.co.in/public/v1/comments/{commentsID}")
+                .then()
+                .log().body()
+                .statusCode(200)
+        ;
+    }
+
+    // Task 6 : Create edilen Comment ı n body kısmını güncelleyiniz.Sonrasında güncellemeyi kontrol ediniz.
+
+    @Test(dependsOnMethods = "createComments",priority = 2)
     public void updateCommentsByID() {
-
-        String bodyText=
+     //   String bodyText=
                 given()
                         .header("Authorization","Bearer e4b725104d61c0ebaffa9eccfe772b0c0cba54dff360d019e2ceeeac90e63eea")
                         .contentType(ContentType.JSON)
                         .body("{\"body\":\"Merhaba Java\"}")
                         .pathParam("commentsID",commentsId)
                         .when()
-                        .put(url+"/{commentsID}")
+                        .put("https://gorest.co.in/public/v1/comments/{commentsID}")
                         .then()
                         .log().body()
                         .statusCode(200)
-                        .extract().path("data.body")
+                        .body("data.body",equalTo("Merhaba Java"))
+                      //  .extract().path("data.body")
+
                 ;
 
-        System.out.println("bodyText = " + bodyText);
-        Assert.assertTrue(bodyText.contains("Java"));
-
+      //  System.out.println("bodyText = " + bodyText);
+     //   Assert.assertTrue(bodyText.contains("Java"));
     }
 
+    // Task 7 : Create edilen Comment ı siliniz. Status kodu kontorl ediniz 204
+
+    @Test(dependsOnMethods = "createComments",priority = 3)
+    public void deleteCommentsByID() {
+    //  int code=
+        given()
+                .header("Authorization","Bearer e4b725104d61c0ebaffa9eccfe772b0c0cba54dff360d019e2ceeeac90e63eea")
+                .pathParam("commentsID",commentsId)
+                .when()
+                .delete("https://gorest.co.in/public/v1/comments/{commentsID}")
+                .then()
+                //.log().body()
+                .statusCode(204)
+               // .extract().statusCode()
+        ;
+    //    System.out.println("code = " + code);
+    //  Assert.assertTrue(code==204);
+    }
+
+    // Task 8 : Silinen Comment ın negatif testini tekrar silmeye çalışarak yapınız.
+
+    @Test(dependsOnMethods = "deleteCommentsByID")
+    public void deleteCommentsByIDNegativ() {
+        given()
+                .header("Authorization","Bearer e4b725104d61c0ebaffa9eccfe772b0c0cba54dff360d019e2ceeeac90e63eea")
+                .pathParam("commentsID",commentsId)
+                .when()
+                .delete("https://gorest.co.in/public/v1/comments/{commentsID}")
+                .then()
+                //.log().body()
+                .statusCode(404)
+        ;
+    }
 
 }

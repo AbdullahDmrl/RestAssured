@@ -15,7 +15,8 @@ import static io.restassured.RestAssured.*;
 public class GoRestPostTest {
 
     int postId;
-    String url="https://gorest.co.in/public/v1/posts";
+   // String url="https://gorest.co.in/public/v1/posts";
+   // String url1="https://gorest.co.in/public/v1/users/123/posts";
 
     @Test(enabled = false)
     public void getPostList() {
@@ -23,11 +24,11 @@ public class GoRestPostTest {
         List<Post> postsList=
                 given()
                         .when()
-                        .get(url)
+                        .get("https://gorest.co.in/public/v1/posts")
                         .then()
                         .statusCode(200)
                         .contentType(ContentType.JSON)
-                       // .log().body()
+                        .log().body()
                        .extract().jsonPath().getList("data", Post.class)
                 ;
         //   System.out.println("postsList = " + postsList);
@@ -36,62 +37,33 @@ public class GoRestPostTest {
             System.out.println("post = " + post);
         }
     }
-
     @Test()
     public void createPost() {
-       Post newPost=new Post();
-       newPost.setUser_id(createRandomInt());
-       newPost.setTitle(createRandomTitle());
-       newPost.setBody(createRandomBody());
+        Post newPost=new Post();
+        newPost.setTitle("IT Testing");
+        newPost.setBody("Prepare for the Restassured");
         postId=
                 given()
                         .header("Authorization","Bearer e4b725104d61c0ebaffa9eccfe772b0c0cba54dff360d019e2ceeeac90e63eea")
                         .contentType(ContentType.JSON)
                         .body(newPost)
                         .when()
-                        .post(url)
+                        .post("https://gorest.co.in/public/v1/users/68/posts")
                         .then()
-                        .statusCode(201)
                         .log().body()
+                        .statusCode(201)
                         .extract().jsonPath().getInt("data.id")
         ;
         System.out.println("postId = " + postId);
     }
 
-     @Test(priority = 1)
-     public void updatePostByID() {
-        Post updatePost=new Post();
-        updatePost.setUser_id(createRandomInt());
-        updatePost.setTitle(createRandomTitle());
-        updatePost.setBody("Merhaba Java");
-
-        String bodyText=
-        given()
-                .header("Authorization","Bearer e4b725104d61c0ebaffa9eccfe772b0c0cba54dff360d019e2ceeeac90e63eea")
-                .contentType(ContentType.JSON)
-               // .body(updatePost)
-                .body("{\"body\":\"Merhaba Java\"}")
-                .pathParam("postID",postId)
-                .when()
-                .put(url+"/{postID}")
-                .then()
-                //.log().body()
-                .statusCode(200)
-                .extract().path("data.body")
-        ;
-
-        System.out.println("bodyText = " + bodyText);
-        Assert.assertTrue(bodyText.contains("Java"));
-
-    }
-
-    @Test(priority = 2)
+    @Test(dependsOnMethods = "createPost",priority = 1)
     public void getPostByID() {
         given()
                 .pathParam("postID",postId)
                 .log().uri()
                 .when()
-                .get(url+"/{postID}")
+                .get("https://gorest.co.in/public/v1/posts/{postID}")
                 .then()
                 .log().body()
                 .statusCode(200)
@@ -99,13 +71,31 @@ public class GoRestPostTest {
         ;
     }
 
-    @Test(priority = 3)
+
+    @Test(dependsOnMethods = "createPost",priority = 2)
+    public void updatePostByID() {
+
+                given()
+                        .header("Authorization","Bearer e4b725104d61c0ebaffa9eccfe772b0c0cba54dff360d019e2ceeeac90e63eea")
+                        .contentType(ContentType.JSON)
+                        .body("{\"body\":\"Merhaba Java\"}")
+                        .pathParam("postID",postId)
+                        .when()
+                        .put("https://gorest.co.in/public/v1/posts/{postID}")
+                        .then()
+                        .log().body()
+                        .statusCode(200)
+                        .body("data.body",equalTo("Merhaba Java"))
+                ;
+    }
+
+    @Test(dependsOnMethods = "createPost",priority = 3)
     public void deletePostByID() {
         given()
                 .header("Authorization","Bearer e4b725104d61c0ebaffa9eccfe772b0c0cba54dff360d019e2ceeeac90e63eea")
                 .pathParam("postID",postId)
                 .when()
-                .delete(url+"/{postID}")
+                .delete("https://gorest.co.in/public/v1/posts/{postID}")
                 .then()
                 .statusCode(204)
         ;
@@ -117,17 +107,10 @@ public class GoRestPostTest {
                 .header("Authorization","Bearer e4b725104d61c0ebaffa9eccfe772b0c0cba54dff360d019e2ceeeac90e63eea")
                 .pathParam("postID",postId)
                 .when()
-                .delete(url+"/{postID}")
+                .delete("https://gorest.co.in/public/v1/posts/{postID}")
                 .then()
                 .statusCode(404)
         ;
-    }
-
-    public int createRandomInt(){
-        Random random=new Random();
-        int max=100;
-        int randomUser_Id=random.nextInt(max);
-        return randomUser_Id;
     }
 
     public String createRandomTitle(){
@@ -139,4 +122,5 @@ public class GoRestPostTest {
         String randomBody=RandomStringUtils.randomAlphabetic(6);
         return randomBody;
     }
+
 }
