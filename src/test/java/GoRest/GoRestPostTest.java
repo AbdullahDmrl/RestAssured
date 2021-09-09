@@ -1,8 +1,9 @@
 package GoRest;
-import GoRest.Model.Post;
+import GoRest.Model.*;
 import io.restassured.http.ContentType;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
@@ -13,30 +14,82 @@ import static org.hamcrest.Matchers.*;
 import static io.restassured.RestAssured.*;
 
 public class GoRestPostTest {
+    // Task 1 : https://gorest.co.in/public/v1/posts  API sinden dönen data bilgisini bir class yardımıyla
+    // List ini alınız.
+
+    // String url="https://gorest.co.in/public/v1/posts";
+    // String url1="https://gorest.co.in/public/v1/users/123/posts";
 
     int postId;
-   // String url="https://gorest.co.in/public/v1/posts";
-   // String url1="https://gorest.co.in/public/v1/users/123/posts";
 
     @Test(enabled = false)
     public void getPostList() {
-
         List<Post> postsList=
                 given()
                         .when()
-                        .get("https://gorest.co.in/public/v1/posts")
+                        .get("/posts")
                         .then()
                         .statusCode(200)
                         .contentType(ContentType.JSON)
                         .log().body()
                        .extract().jsonPath().getList("data", Post.class)
                 ;
-        //   System.out.println("postsList = " + postsList);
         for (Post post:postsList)
         {
             System.out.println("post = " + post);
         }
     }
+    // Task 2 : https://gorest.co.in/public/v1/posts  API sinden sadece 1 kişiye ait postları listeletiniz.
+    //  https://gorest.co.in/public/v1/users/87/posts
+    // Bir user in post larini alma
+
+    @BeforeClass
+     public void starUp()
+    {
+        baseURI="https://gorest.co.in/public/v1";
+    }
+
+
+    @Test(enabled = false)
+    public void getoneUserPosts() {
+        List<Post> userPostsList=
+                given()
+                        .when()
+                        .get("/users/87/posts")
+                        .then()
+                       // .log().body()
+                        .statusCode(200)
+                        .extract().jsonPath().getList("data", Post.class)
+                ;
+        for (Post post:userPostsList)
+        {
+            System.out.println("User 87 = " + post);
+        }
+    }
+
+    // Task 3 : https://gorest.co.in/public/v1/posts  API sinden dönen bütün bilgileri tek bir nesneye atınız
+
+    @Test(enabled = false)
+    public void postAllPOJO()
+    {
+        PostsBody body =
+                given()
+                        .when()
+                        .get("/posts")
+                        .then()
+                      //  .log().body()
+                        .extract().as(PostsBody.class)
+                ;
+        System.out.println("body.getMeta() = " + body.getMeta());
+
+        List<Post> dataList= body.getData();
+        for (Post p:dataList)
+        {
+            System.out.println("dataListElemet = " + p);
+        }
+    }
+
+    // Task 4 : https://gorest.co.in/public/v1/posts  API sine 87 nolu usera ait bir post create ediniz.
     @Test()
     public void createPost() {
         Post newPost=new Post();
@@ -48,22 +101,47 @@ public class GoRestPostTest {
                         .contentType(ContentType.JSON)
                         .body(newPost)
                         .when()
-                        .post("https://gorest.co.in/public/v1/users/68/posts")
+                        .post("/users/87/posts")
                         .then()
                         .log().body()
                         .statusCode(201)
+                        .body("data.user_id",equalTo(87))
                         .extract().jsonPath().getInt("data.id")
         ;
         System.out.println("postId = " + postId);
     }
 
+    @Test(enabled = false)
+    public void createPost2() {
+        Post newPost=new Post();
+        newPost.setTitle("IT");
+        newPost.setBody("Restassured");
+        newPost.setUser_id(1235);
+        postId=
+                given()
+                        .header("Authorization","Bearer e4b725104d61c0ebaffa9eccfe772b0c0cba54dff360d019e2ceeeac90e63eea")
+                        .contentType(ContentType.JSON)
+                        .body(newPost)
+                        .when()
+                        .post("/posts")
+                        .then()
+                        .log().body()
+                        .statusCode(201)
+                        .body("data.user_id",equalTo(1235))
+                        .extract().jsonPath().getInt("data.id")
+        ;
+        System.out.println("postId = " + postId);
+    }
+
+    // Task 5 : Create edilen Post ı get yaparak id sini kontrol ediniz.
+
     @Test(dependsOnMethods = "createPost",priority = 1)
     public void getPostByID() {
         given()
                 .pathParam("postID",postId)
-                .log().uri()
+               // .log().uri()
                 .when()
-                .get("https://gorest.co.in/public/v1/posts/{postID}")
+                .get("/posts/{postID}")
                 .then()
                 .log().body()
                 .statusCode(200)
@@ -71,23 +149,24 @@ public class GoRestPostTest {
         ;
     }
 
-
+    // Task 6 : Create edilen Post un body sini güncelleyerek, bilgiyi kontrol ediniz
     @Test(dependsOnMethods = "createPost",priority = 2)
     public void updatePostByID() {
-
-                given()
+                 given()
                         .header("Authorization","Bearer e4b725104d61c0ebaffa9eccfe772b0c0cba54dff360d019e2ceeeac90e63eea")
                         .contentType(ContentType.JSON)
                         .body("{\"body\":\"Merhaba Java\"}")
                         .pathParam("postID",postId)
                         .when()
-                        .put("https://gorest.co.in/public/v1/posts/{postID}")
+                        .put("/posts/{postID}")
                         .then()
                         .log().body()
                         .statusCode(200)
                         .body("data.body",equalTo("Merhaba Java"))
                 ;
     }
+
+
 
     @Test(dependsOnMethods = "createPost",priority = 3)
     public void deletePostByID() {
