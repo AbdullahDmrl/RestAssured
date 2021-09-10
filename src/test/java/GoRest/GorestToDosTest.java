@@ -4,9 +4,14 @@ import GoRest.Model.PostsBody;
 import GoRest.Model.Todos;
 import GoRest.Model.TodosBody;
 import io.restassured.http.ContentType;
+import io.restassured.response.Response;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.hamcrest.Matchers.*;
@@ -20,8 +25,172 @@ public class GorestToDosTest {
         baseURI="https://gorest.co.in/public/v1";
     }
 
+    // Task 1: https://gorest.co.in/public/v1/todos  Api sinden dönen verilerdeki
+    //         en büyük id sini bulunuz
+    @Test
+    public void getBiggestId() {
+        List<Integer> idList=
+                given()
+                        .when()
+                        .get("/todos")
+                        .then()
+                        .statusCode(200)
+                        .contentType(ContentType.JSON)
+                       // .log().body()
+                        .extract().jsonPath().getList("data.id")
+                ;
+    // 1 yol
+            int max=0;
+        for (int a:idList){
+            if(a>max)
+                max=a;
+        }
+        System.out.println("max="+max);
+    // 2 yol
+        Collections.sort(idList);
+        System.out.println("userIdList = " + idList.get(idList.size()-1));
+           
+    }
+    // 2 yol
+
+    @Test
+    public void findBigIdOfTodos()
+    {
+        List<Todos> todoList=
+                given()
+                        .when()
+                        .get("/todos")
+                        .then()
+                        //.log().body()
+                        .extract().jsonPath().getList("data", Todos.class)
+                ;
+        int maxId=0;
+        for(int i=0;i<todoList.size();i++)
+        {
+            if (todoList.get(i).getId() > maxId)
+            {
+                maxId=todoList.get(i).getId();
+            }
+        }
+        System.out.println("maxId = " + maxId);
+    }
+
+    // Task 2: https://gorest.co.in/public/v1/todos  Api sinden dönen verilerdeki
+    //         en büyük id ye sahip todo nun id sini BÜTÜN PAGE leri dikkate alarak bulunuz.
+
+
+   // pages sayisi alttaki test ile aliniyor
+    int pages;
+    @Test
+    public void getPages() {
+        Response response=
+                given()
+                        .when()
+                        .get("/todos")
+                        .then()
+                        // .log().body()
+                        .extract().response()
+                ;
+        pages=response.path("meta.pagination.pages");
+        System.out.println("pages = " + pages);
+    }
+
+    // Listelerin Listesi olusturulup her sayfadaki liste ona atiliyor
+    List<List<Integer> >allPagesIdList=new ArrayList<>();
+    @Test(dependsOnMethods = "getPages")
+    public void biggestIdAllPages()
+    {
+        for(int page=1;page<=pages;page++) {
+          // her sayfadaki id ler liste aliniyor
+            List<Integer>  pageIdList=
+            given()
+                    .param("page", page)
+                    //.log().uri()
+                    .when()
+                    .get("/todos")
+
+                    .then()
+                    //.log().body()
+                    .extract().jsonPath().getList("data.id");
+
+           // her sayfadaki id listler listelerin listesine atiliyor
+            allPagesIdList.add(pageIdList);
+        }
+        System.out.println("AllIdList = " + allPagesIdList);
+
+        // tüm id leri kapsayan listelerin listesinden max id bulunuyor
+        int maxId=0;
+        for(int i=0;i<allPagesIdList.size();i++)
+        {
+            for (int j = 0; j <allPagesIdList.get(i).size() ; j++) {
+                if (allPagesIdList.get(i).get(j) > maxId)
+                {
+                    maxId=allPagesIdList.get(i).get(j);
+                }
+            }
+        }
+        System.out.println("maxId = " + maxId);
+    }
+
+
+    // Ayın sorusu : https://gorest.co.in/public/v1/todos  Api sinden dönen verilerdeki
+    // zaman olarak ilk todo nun hangi userId ye ait olduğunu bulunuz
+
+    @Test
+    public void getfirstTodosUser_Ids() {
+        List<Todos> todosList=
+                given()
+                        .when()
+                        .get("/todos")
+                        .then()
+                        .statusCode(200)
+                        .contentType(ContentType.JSON)
+                        // .log().body()
+                        .extract().jsonPath().getList("data", Todos.class)
+                ;
+
+        List<String> dates=new ArrayList<>();
+        //   Tarihlerin String list olarak alinmasi
+        for (Todos todo:todosList)
+        {
+          String date=todo.getDue_on().substring(0,10).replace("-"," ");
+          dates.add(date);
+        }
+        System.out.println("dates = " + dates);
+
+        // Tarihlerin LocalDate e cevirilmesi
+        DateTimeFormatter format=DateTimeFormatter.ofPattern("yyyy MM dd");
+        List<LocalDate> dueDates=new ArrayList<>();
+        for (int i = 0; i < dates.size(); i++) {
+            LocalDate dueDate=LocalDate.parse(dates.get(i),format);
+            dueDates.add(dueDate);
+        }
+        System.out.println("dueDates = " + dueDates);
+
+        // Ilk todo nun bulunmasi ve user_id lerin alinmasi
+        LocalDate firstDate=null;
+        for (int i = 0; i < dueDates.size()-1; i++) {
+
+            if (dueDates.get(i).isBefore(dueDates.get(i+1)))
+              firstDate=dueDates.get(i);
+        }
+        System.out.println("firstDate = " + firstDate);
+         // LocalDate in String e cevrilmesi
+         String stringFirsDate=String.valueOf(firstDate);
+
+        for (int i = 0; i < todosList.size(); i++) {
+            if (todosList.get(i).getDue_on().contains(stringFirsDate))
+                System.out.println("First Todo user_id = " + todosList.get(i).getUser_id()+" due_on ="+todosList.get(i).getDue_on());
+        }
+    }
+
+
+
+
+
+
     //Task 1
-    @Test(enabled = false)
+    @Test
     public void getTodosList() {
 
         List<Todos> todosList=
@@ -34,6 +203,9 @@ public class GorestToDosTest {
                         .log().body()
                         .extract().jsonPath().getList("data", Todos.class)
                 ;
+
+     
+
         //   System.out.println("postsList = " + postsList);
        for (Todos todo:todosList)
        {
@@ -142,7 +314,7 @@ public class GorestToDosTest {
         ;
     }
 
-    // Task 7 : Create edilen Comment ı siliniz. Status kodu kontorl ediniz 204
+    // Task 7 : Create edilen Todo yu siliniz. Status kodu kontorl ediniz 204
 
     @Test(dependsOnMethods = "createTodos",priority = 3)
     public void deleteTodoByID() {
@@ -157,7 +329,7 @@ public class GorestToDosTest {
         ;
 
     }
-    // Task 8 : Silinen Comment ın negatif testini tekrar silmeye çalışarak yapınız.
+    // Task 8 : Silinen Todo ın negatif testini tekrar silmeye çalışarak yapınız.
 
     @Test(dependsOnMethods = "deleteTodoByID")
     public void deleteTodoByIDNegativ() {

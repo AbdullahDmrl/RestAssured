@@ -23,7 +23,7 @@ public class Location {
         return places;
     }
 
-    @JsonProperty("post code")
+    @JsonProperty("post code")      // sadece set lere yapmamiz yeterli
     public void setPostcode(String postcode) {
         this.postcode = postcode;
     }

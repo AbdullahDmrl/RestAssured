@@ -166,7 +166,7 @@ public class GoRestPostTest {
                 ;
     }
 
-
+    // Task 7 : Create edilen Post u delete ediniz, status kontrol ediniz
 
     @Test(dependsOnMethods = "createPost",priority = 3)
     public void deletePostByID() {
@@ -174,11 +174,12 @@ public class GoRestPostTest {
                 .header("Authorization","Bearer e4b725104d61c0ebaffa9eccfe772b0c0cba54dff360d019e2ceeeac90e63eea")
                 .pathParam("postID",postId)
                 .when()
-                .delete("https://gorest.co.in/public/v1/posts/{postID}")
+                .delete("/posts/{postID}")
                 .then()
                 .statusCode(204)
         ;
     }
+    // Task 8 : Silinen Post ın negatif testini tekrar silmeye çalışarak yapınız.
 
     @Test(dependsOnMethods = "deletePostByID")
     public void deletePostByIDNegativ() {
@@ -186,11 +187,12 @@ public class GoRestPostTest {
                 .header("Authorization","Bearer e4b725104d61c0ebaffa9eccfe772b0c0cba54dff360d019e2ceeeac90e63eea")
                 .pathParam("postID",postId)
                 .when()
-                .delete("https://gorest.co.in/public/v1/posts/{postID}")
+                .delete("/posts/{postID}")
                 .then()
                 .statusCode(404)
         ;
     }
+
 
     public String createRandomTitle(){
         String randomTitle=RandomStringUtils.randomAlphabetic(4);

@@ -156,12 +156,12 @@ public class ZippoTest {
     }
     /*
     API ye parametre gönderme
-    1.Yöntem : parametreler / ayıracı    ile metoda gönderiliyor
+    1.Yöntem pathParam: parametreler / ayıracı    ile metoda gönderiliyor
     http://api.zippopotam.us/us/90210    linki inceleyelim
     http://api.zippopotam.us->  API nin adresi
                /us/90210->  us ülke değişkenin değeri
                             90210 zipkodu
-    2.Yöntem
+    2.Yöntem:param
     https://gorest.co.in/public/v1/users  API adresi
     https://gorest.co.in/public/v1/users?page=1&count=3
                                      page değişken adı  = sonrası değeri
