@@ -27,7 +27,7 @@ public class GorestToDosTest {
 
     // Task 1: https://gorest.co.in/public/v1/todos  Api sinden dönen verilerdeki
     //         en büyük id sini bulunuz
-    @Test
+    @Test(enabled = false)
     public void getBiggestId() {
         List<Integer> idList=
                 given()
@@ -53,7 +53,7 @@ public class GorestToDosTest {
     }
     // 2 yol
 
-    @Test
+    @Test(enabled = false)
     public void findBigIdOfTodos()
     {
         List<Todos> todoList=
@@ -79,67 +79,78 @@ public class GorestToDosTest {
     //         en büyük id ye sahip todo nun id sini BÜTÜN PAGE leri dikkate alarak bulunuz.
 
 
-   // pages sayisi alttaki test ile aliniyor
-    int pages;
-    @Test
-    public void getPages() {
-        Response response=
-                given()
-                        .when()
-                        .get("/todos")
-                        .then()
-                        // .log().body()
-                        .extract().response()
-                ;
-        pages=response.path("meta.pagination.pages");
-        System.out.println("pages = " + pages);
-    }
-
-    // Listelerin Listesi olusturulup her sayfadaki liste ona atiliyor
-    List<List<Integer> >allPagesIdList=new ArrayList<>();
-    @Test(dependsOnMethods = "getPages")
-    public void biggestIdAllPages()
-    {
-        for(int page=1;page<=pages;page++) {
-          // her sayfadaki id ler liste aliniyor
-            List<Integer>  pageIdList=
-            given()
-                    .param("page", page)
-                    //.log().uri()
-                    .when()
-                    .get("/todos")
-
-                    .then()
-                    //.log().body()
-                    .extract().jsonPath().getList("data.id");
-
-           // her sayfadaki id listler listelerin listesine atiliyor
-            allPagesIdList.add(pageIdList);
-        }
-        System.out.println("AllIdList = " + allPagesIdList);
-
-        // tüm id leri kapsayan listelerin listesinden max id bulunuyor
+    @Test(enabled = false)
+    public void getPagesmaxID() {
+        int page=1;
+        int  pages=0;
         int maxId=0;
-        for(int i=0;i<allPagesIdList.size();i++)
-        {
-            for (int j = 0; j <allPagesIdList.get(i).size() ; j++) {
-                if (allPagesIdList.get(i).get(j) > maxId)
-                {
-                    maxId=allPagesIdList.get(i).get(j);
+        do{
+            Response response=
+                    given()
+                            .param("page", page) // ?page=1
+                           // .log().uri()
+                            .when()
+                            .get("/todos")
+                            .then()
+                           //  .log().body()
+                            .extract().response()
+                    ;
+            if (page == 1) // kaç sayfa olduğunu bulduk
+            pages=response.path("meta.pagination.pages");
+
+
+            List<Todos> idList=response.jsonPath().getList("data",Todos.class);
+
+            for (int i = 0; i <idList.size() ; i++) {
+                if (maxId<idList.get(i).getId())
+                maxId=idList.get(i).getId();
+            }
+            page++;
+        }while(page<=pages);
+        System.out.println("pages = " + pages);
+        System.out.println("maxId = " + maxId);
+
+    }
+        // 2 Yol For ile
+    @Test(enabled = false)
+    public void getBigestIdAllOfPageFor() {
+            int totalPage = 1, maxID=0;
+
+            for (int page = 1; page <= totalPage; page++) {
+                Response response =
+                        given()
+                                .param("page", page) // ?page=1
+                                .log().uri()
+                                .when()
+                                .get("/todos")
+
+                                .then()
+                              //  .log().body()
+                                .extract().response();
+                if (page == 1)
+                    totalPage = response.jsonPath().getInt("meta.pagination.pages");
+                //sıradaki Page in datasını List olarak aldık
+                List<Todos> pageList = response.jsonPath().getList("data", Todos.class);
+
+                // elimizdeki en son maxID yi alarak bu pagedeki ID lerler karşılaştırıp en büyük ID yi almış olduk.
+                for (int i = 0; i < pageList.size(); i++) {
+                    if (maxID < pageList.get(i).getId())
+                        maxID = pageList.get(i).getId();
                 }
             }
+
+        System.out.println("maxID = " + maxID);
         }
-        System.out.println("maxId = " + maxId);
-    }
 
 
     // Ayın sorusu : https://gorest.co.in/public/v1/todos  Api sinden dönen verilerdeki
     // zaman olarak ilk todo nun hangi userId ye ait olduğunu bulunuz
 
-    @Test
+    @Test(enabled = false)
     public void getfirstTodosUser_Ids() {
         List<Todos> todosList=
                 given()
+
                         .when()
                         .get("/todos")
                         .then()
@@ -185,12 +196,35 @@ public class GorestToDosTest {
     }
 
 
+    // Task 3 : https://gorest.co.in/public/v1/todos  Api sinden
+    // dönen bütün bütün sayfalardaki bütün idleri tek bir Liste atınız.
+
+    @Test(enabled = false)
+    public void allID() {
+        int page=1;
+        int  totalPage=0;
+        List<Integer> allIdList=new ArrayList<>();
+        do{
+            Response response=
+                    given()
+                            .param("page", page)
+                            .when()
+                            .get("/todos")
+                            .then()
+                            // .log().body()
+                            .extract().response();
+            if(page==1)
+            totalPage = response.jsonPath().getInt("meta.pagination.pages");
+            List<Integer> pagesID=response.jsonPath().getList("data.id");
+             allIdList.addAll(pagesID);
+            page++;
+        }while(page<=totalPage);
+        System.out.println("allIdList = " + allIdList);
+    }
 
 
 
-
-    //Task 1
-    @Test
+    @Test(enabled = false)
     public void getTodosList() {
 
         List<Todos> todosList=
@@ -253,7 +287,8 @@ public class GorestToDosTest {
         }
     }
 
-    // Task 4 : https://gorest.co.in/public/v1/todos  API sine 90 nolu usera ait bir post create ediniz.
+    // Task 4 : https://gorest.co.in/public/v1/todos  Api sine
+    // 1 todo Create ediniz.
 
     int todosId;
     @Test()
@@ -278,11 +313,10 @@ public class GorestToDosTest {
         System.out.println("todosId = " + todosId);
     }
 
-    // Task 5 : Create edilen Todo ı get yaparak id sini kontrol ediniz.
+    // Task 5 : Create edilen ToDo yu get yaparak id sini kontrol ediniz.
 
     @Test(dependsOnMethods = "createTodos",priority = 1)
     public void getTodoByID() {
-
         given()
                 .pathParam("todosID",todosId)
                 .log().uri()
@@ -294,23 +328,27 @@ public class GorestToDosTest {
                 .body("data.id",equalTo(todosId))
                // .extract().path("data.user_id")
         ;
-
     }
-    // Task 6 : Create edilen Todo nun title ini güncelleyerek, bilgiyi kontrol ediniz
+
+
+    // Task 6 : Create edilen ToDo u un status kısmını ("complated") güncelleyiniz.
+    //  Sonrasında güncellemeyi kontrol ediniz.
 
     @Test(dependsOnMethods = "createTodos",priority = 2)
     public void updateTodoByID() {
+        String status="completed";
         given()
                 .header("Authorization","Bearer e4b725104d61c0ebaffa9eccfe772b0c0cba54dff360d019e2ceeeac90e63eea")
                 .contentType(ContentType.JSON)
-                .body("{\"title\":\"ISTQB Prüfung\"}")
+               // .body("{\"status\":\"completed\"}")
+                .body("{\"status\":\"" + status + "\"}")
                 .pathParam("todosID",todosId)
                 .when()
                 .put("/todos/{todosID}")
                 .then()
                 .log().body()
                 .statusCode(200)
-                .body("data.title",equalTo("ISTQB Prüfung"))
+                .body("data.status",equalTo(status))
         ;
     }
 
@@ -327,9 +365,8 @@ public class GorestToDosTest {
                 .then()
                 .statusCode(204)
         ;
-
     }
-    // Task 8 : Silinen Todo ın negatif testini tekrar silmeye çalışarak yapınız.
+
 
     @Test(dependsOnMethods = "deleteTodoByID")
     public void deleteTodoByIDNegativ() {
