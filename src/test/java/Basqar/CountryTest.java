@@ -24,7 +24,7 @@ giden body :
     "rememberMe": true
 }
 
-POST : token oluşturulduğu için
+
 
     */
    Cookies cookies;
@@ -32,7 +32,7 @@ POST : token oluşturulduğu için
     public void loginBasqar(){
         baseURI="https://demo.mersys.io";
 
-        Map<String,String> credential=new HashMap<>();
+        Map<String,String> credential=new HashMap<>();  // Class yada MAP ile sent body yapilabillir
         credential.put("username","richfield.edu");
         credential.put("password","Richfield2020!");
         credential.put("rememberMe","true");
@@ -41,7 +41,7 @@ POST : token oluşturulduğu için
                 .body(credential)
                 .contentType(ContentType.JSON)
                 .when()
-                .post("/auth/login")
+                .post("/auth/login") // POST : token oluşturulduğu için
 
                 .then()
                 .statusCode(200)
@@ -51,17 +51,16 @@ POST : token oluşturulduğu için
 
     }
 
-    String genName=RandomStringUtils.randomAlphabetic(5);
-    String genCode=RandomStringUtils.randomAlphabetic(2);
-
+    String rangenName=RandomStringUtils.randomAlphabetic(5);
+    String rangenCode=RandomStringUtils.randomAlphabetic(2);
     String countryId;
 
     @Test
     public void createCountry(){
 
         Country country=new Country();
-        country.setName(genName);
-        country.setCode(genCode);
+        country.setName(rangenName);
+        country.setCode(rangenCode);
 
      countryId=   given()
                 .cookies(cookies)
@@ -72,17 +71,18 @@ POST : token oluşturulduğu için
 
                 .then()
                 .statusCode(201)
-                .body("name",equalTo(genName))
+                .body("name",equalTo(rangenName))
+                 .body("code",equalTo(rangenCode))
                 .log().body()
                 .extract().path("id")
-                ;
+      ;
     }
 
     @Test(dependsOnMethods = "createCountry",priority = 1)
     public void createCountryNegativ(){
         Country country=new Country();
-        country.setName(genName);
-        country.setCode(genCode);
+        country.setName(rangenName);
+        country.setCode(rangenCode);
 
         given()
                 .cookies(cookies)
@@ -90,10 +90,9 @@ POST : token oluşturulduğu için
                 .body(country)
                 .when()
                 .post("/school-service/api/countries")
-
                 .then()
                .statusCode(400)
-                .body("message",equalTo("The Country with Name \""+genName+"\" already exists."))
+                .body("message",equalTo("The Country with Name \""+rangenName+"\" already exists."))
                 .log().body()
         ;
     }
