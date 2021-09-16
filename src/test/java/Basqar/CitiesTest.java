@@ -61,12 +61,11 @@ public class CitiesTest {
                 .statusCode(201)
                 .extract().response()
         ;
-        countryId=response.jsonPath().getString("countryId");
+       countryId=response.jsonPath().getString("countryId");
        id=response.path("id");
        System.out.println("countryId = " + countryId);
-        System.out.println("id = " + id);
+       System.out.println("id = " + id);
     }
-
 
     @Test(dependsOnMethods = "createCities",priority = 1)
     public void createCitiesNegativ(){
@@ -88,16 +87,6 @@ public class CitiesTest {
         ;
 
     }
-/*
-{
-  "id": "6140ae520e6435505dfa5b98",
-  "name": "sdr",
-  "countryId": "613f7d7a40ab975e82d16e16",
-  "stateId": null,
-  "translateName": null
-}
- */
-
 
     @Test(dependsOnMethods = "createCities",priority = 2)
     public void updateCityById(){
@@ -144,10 +133,12 @@ public class CitiesTest {
         given()
                 .cookies(cookies)
                 .pathParams("id",id)
+                .log().all()
                 .log().uri()
                 .when()
                 .delete("/school-service/api/cities/{id}")
                 .then()
+                .log().body()
                 .statusCode(200)
         ;
     }
