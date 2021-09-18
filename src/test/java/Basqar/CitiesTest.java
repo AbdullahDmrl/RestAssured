@@ -110,6 +110,7 @@ public class CitiesTest {
 
                 .statusCode(200)
         ;
+
     }
 
     @Test(dependsOnMethods = "createCities",priority = 3)

@@ -5,6 +5,10 @@ import io.restassured.http.ContentType;
 import io.restassured.http.Cookie;
 import io.restassured.http.Cookies;
 import org.apache.commons.lang3.RandomStringUtils;
+
+
+import org.testng.Reporter;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -12,6 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 import static io.restassured.RestAssured.*;
 import static org.hamcrest.Matchers.*;
+import static org.testng.Reporter.*;
 
 public class CountryTest {
 
@@ -143,13 +148,9 @@ giden body :
                 .delete("/school-service/api/countries/{countryId}")
                 .then()
                // .log().body()
-                .statusCode(404)
+                .statusCode(401)
         ;
     }
-
-
-
-
 
 
 }
