@@ -148,7 +148,7 @@ giden body :
                 .delete("/school-service/api/countries/{countryId}")
                 .then()
                // .log().body()
-                .statusCode(200)
+                .statusCode(404)
         ;
     }
 
