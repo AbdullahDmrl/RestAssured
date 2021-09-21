@@ -45,7 +45,7 @@ public class CitiesTest {
     @Test
     public void createCities(){
         Map<String,String> city=new HashMap<>();
-        city.put("countryId","613f7d7a40ab975e82d16e16");
+        city.put("countryId","61476caa26d5662012788bbf");
         city.put("name",name);
 
        Response response = given()
