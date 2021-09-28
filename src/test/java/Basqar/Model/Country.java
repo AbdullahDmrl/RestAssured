@@ -3,7 +3,7 @@ package Basqar.Model;
 public class Country {
     private String name;
     private String code;
-    private String id;
+    public String id;
 
     public String getId() {
         return id;

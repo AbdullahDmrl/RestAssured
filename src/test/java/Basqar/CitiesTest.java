@@ -1,4 +1,6 @@
 package Basqar;
+import Basqar.Model.City;
+import Basqar.Model.Country;
 import io.restassured.http.ContentType;
 import io.restassured.http.Cookies;
 import io.restassured.response.Response;
@@ -39,19 +41,20 @@ public class CitiesTest {
 
     }
 
-    String countryId;
+
     String name= RandomStringUtils.randomAlphabetic(5);
     String id;
     @Test
     public void createCities(){
-        Map<String,String> city=new HashMap<>();
-        city.put("countryId","61476caa26d5662012788bbf");
-        city.put("name",name);
-
+        Country country=new Country();
+        country.setId("61476caa26d5662012788bbf");
+        City city1=new City();
+        city1.setName(name);
+        city1.setCountry(country);
        Response response = given()
                 .cookies(cookies)
                 .contentType(ContentType.JSON)
-                .body(city)
+                .body(city1)
                 .when()
                 .post("/school-service/api/cities")
 
@@ -61,22 +64,24 @@ public class CitiesTest {
                 .statusCode(201)
                 .extract().response()
         ;
-       countryId=response.jsonPath().getString("countryId");
+       city1.getCountry().id=response.jsonPath().getString("country.id");
        id=response.path("id");
-       System.out.println("countryId = " + countryId);
+       System.out.println("countryId = " + city1.getCountry().id);
        System.out.println("id = " + id);
     }
 
     @Test(dependsOnMethods = "createCities",priority = 1)
     public void createCitiesNegativ(){
-        Map<String,String> city=new HashMap<>();
-        city.put("countryId",countryId);
-        city.put("name",name);
+        Country country=new Country();
+        country.setId("61476caa26d5662012788bbf");
+        City city1=new City();
+        city1.setName(name);
+        city1.setCountry(country);
 
         given()
                 .cookies(cookies)
                 .contentType(ContentType.JSON)
-                .body(city)
+                .body(city1)
                 .when()
                 .post("/school-service/api/cities")
 
@@ -91,21 +96,23 @@ public class CitiesTest {
     @Test(dependsOnMethods = "createCities",priority = 2)
     public void updateCityById(){
        String cityName=RandomStringUtils.randomAlphabetic(6);
-        Map<String,String> city=new HashMap<>();
-        city.put("countryId",countryId);
-        city.put("id",id);
-        city.put("name",cityName);
+        Country country=new Country();
+        country.setId("61476caa26d5662012788bbf");
+        City city1=new City();
+        city1.setName(cityName);
+        city1.setId(id);
+        city1.setCountry(country);
 
         given()
                 .cookies(cookies)
                 .contentType(ContentType.JSON)
-                .body(city)
+                .body(city1)
                 .when()
                 .put("/school-service/api/cities")
                 .then()
                 .log().body()
                 .body("name",equalTo(cityName))
-                .body("countryId",equalTo(countryId))
+                //.body("countryId",equalTo(countryId))
                 .body("id",equalTo(id))
 
                 .statusCode(200)
